@@ -1,0 +1,5 @@
+{
+  "name": "ChartBot AI",
+  "description": "An intelligent conversational agent that instantly visualizes your data. Just describe what you want to see, and ChartBot generates beautiful, interactive charts using the Gemini API.",
+  "requestFramePermissions": []
+}
