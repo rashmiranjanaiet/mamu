@@ -7,7 +7,7 @@ This project builds a Retrieval-Augmented Generation chatbot that answers questi
 - Admin indexes PDF locally (CLI/startup path). Web users only ask questions.
 - Text extraction via `pypdf`.
 - Chunking into fixed 500-word chunks.
-- Embeddings with OpenAI API.
+- Embeddings and chat via OpenAI-compatible API (OpenAI or Gemini endpoint).
 - FAISS vector store with cosine similarity search.
 - Retriever `top_k=5`.
 - FastAPI backend + Streamlit frontend.
@@ -57,11 +57,11 @@ python -m venv .venv
 pip install -r rag_chatbot/requirements.txt
 ```
 
-3. Create `.env` from example.
+3. Create `rag_chatbot/.env` from example.
 ```bash
-copy rag_chatbot\.env.example .env
+copy rag_chatbot\.env.example rag_chatbot\.env
 ```
-Set `OPENAI_API_KEY` in `.env`.
+Set your API settings in `rag_chatbot/.env`.
 
 4. Start FastAPI backend.
 ```bash
@@ -77,13 +77,37 @@ streamlit run rag_chatbot/frontend/app.py
 - Upload is disabled by default (`ENABLE_ADMIN_UI=false`).
 - Users can only ask questions in chat.
 
+## Provider Setup
+
+Use one provider style in `rag_chatbot/.env`.
+
+OpenAI example:
+```env
+OPENAI_API_KEY=your_openai_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+CHAT_MODEL=gpt-4o-mini
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_BATCH_SIZE=128
+```
+
+Gemini (OpenAI-compatible) example:
+```env
+OPENAI_API_KEY=your_gemini_key
+OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+CHAT_MODEL=gemini-2.5-flash
+EMBEDDING_MODEL=gemini-embedding-001
+EMBEDDING_BATCH_SIZE=100
+```
+
+Note: for Gemini embeddings, keep `EMBEDDING_BATCH_SIZE` at `100` or lower.
+
 ## Run With Docker Compose
 
 1. Create `.env` in `rag_chatbot/`.
 ```bash
 copy rag_chatbot\.env.example rag_chatbot\.env
 ```
-Set `OPENAI_API_KEY` in `rag_chatbot/.env`.
+Set provider settings in `rag_chatbot/.env` (see Provider Setup above).
 
 2. Build and start services.
 ```bash
@@ -99,6 +123,25 @@ docker compose up --build -d
 ```bash
 docker compose down
 ```
+
+## Deploy On Render
+
+This repo includes a Render Blueprint file: `render.yaml` (at repo root).
+
+1. Push code to GitHub.
+2. In Render, create a new Blueprint and select this repo.
+3. Render will create:
+- `rag-chatbot-backend` (FastAPI)
+- `rag-chatbot-frontend` (Streamlit)
+4. Set secrets in Render:
+- Backend: `OPENAI_API_KEY`
+- Frontend: `API_URL` = your backend public URL (example: `https://rag-chatbot-backend.onrender.com`)
+5. Deploy both services.
+
+Important for Render:
+- `APP_DATA_DIR` is set to `/var/data` with a persistent disk.
+- `ENABLE_ADMIN_UI=false` and `ALLOW_ADMIN_INGESTION_API=false` by default.
+- If you need first-time indexing on Render, temporarily set `ALLOW_ADMIN_INGESTION_API=true`, upload/index once, then set it back to `false`.
 
 ## Run Locally (Windows, Recommended if Docker is off)
 
