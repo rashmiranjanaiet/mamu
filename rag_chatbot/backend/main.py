@@ -34,6 +34,7 @@ embedder = OpenAIEmbedder(
     api_key=settings.openai_api_key,
     model=settings.embedding_model,
     batch_size=settings.embedding_batch_size,
+    base_url=settings.openai_base_url,
 )
 ingestion_service = IngestionService(
     store=store, embedder=embedder, chunk_size_words=settings.chunk_size_words
@@ -45,13 +46,21 @@ _retrieval_lock = threading.Lock()
 _retrieval_service: RetrievalService | None = None
 
 
+def _ensure_admin_api_enabled() -> None:
+    if not settings.allow_admin_ingestion_api:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin ingestion API is disabled. Use local CLI ingestion or enable it in settings.",
+        )
+
+
 def _load_retrieval_service() -> None:
     global _retrieval_service
     if not store.exists():
         _retrieval_service = None
         return
     index, records = store.load()
-    client = OpenAI(api_key=settings.openai_api_key)
+    client = OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url)
     _retrieval_service = RetrievalService(
         client=client,
         chat_model=settings.chat_model,
@@ -110,6 +119,7 @@ async def upload_book(
     file: UploadFile = File(...),
     force: bool = Query(default=False),
 ) -> UploadResponse:
+    _ensure_admin_api_enabled()
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a PDF file.")
     if store.exists() and not force:
@@ -135,6 +145,7 @@ def index_local_book(
     payload: LocalIndexRequest,
     background_tasks: BackgroundTasks,
 ) -> UploadResponse:
+    _ensure_admin_api_enabled()
     pdf_path = Path(payload.pdf_path).expanduser()
     if not pdf_path.exists() or not pdf_path.is_file():
         raise HTTPException(status_code=400, detail="PDF path does not exist.")
@@ -154,6 +165,7 @@ def index_local_book(
 
 @app.get("/admin/status/{job_id}", response_model=JobStatus)
 def upload_status(job_id: str) -> JobStatus:
+    _ensure_admin_api_enabled()
     with _jobs_lock:
         data = _jobs.get(job_id)
     if not data:

@@ -1,10 +1,10 @@
 # Production RAG Chatbot (PDF Book QA)
 
-This project builds a Retrieval-Augmented Generation chatbot that answers questions only from one uploaded PDF book.
+This project builds a Retrieval-Augmented Generation chatbot that answers questions only from one indexed PDF book.
 
 ## Features
 
-- Admin uploads PDF once using `/admin/upload` (or CLI script).
+- Admin indexes PDF locally (CLI/startup path). Web users only ask questions.
 - Text extraction via `pypdf`.
 - Chunking into fixed 500-word chunks.
 - Embeddings with OpenAI API.
@@ -73,10 +73,9 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --app-dir rag_chatb
 streamlit run rag_chatbot/frontend/app.py
 ```
 
-6. In Streamlit sidebar:
-- Upload your PDF.
-- Wait for indexing completion.
-- Ask questions in chat.
+6. Streamlit web app:
+- Upload is disabled by default (`ENABLE_ADMIN_UI=false`).
+- Users can only ask questions in chat.
 
 ## Run With Docker Compose
 
@@ -136,10 +135,19 @@ set PYTHONPATH=rag_chatbot
 python rag_chatbot/scripts/ingest_book.py "C:\path\to\book.pdf"
 ```
 
+## Optional: Auto Index On Startup (Admin One-Time)
+
+Set this in `rag_chatbot/.env`:
+```env
+DEFAULT_BOOK_PDF_PATH=C:\path\to\book.pdf
+```
+On backend startup, if no index exists, the PDF is indexed automatically.
+
 ## API Endpoints
 
-- `POST /admin/upload?force=false` - Upload and start indexing.
-- `GET /admin/status/{job_id}` - Ingestion job status.
+- `POST /admin/upload?force=false` - Upload and start indexing (disabled by default unless `ALLOW_ADMIN_INGESTION_API=true`).
+- `POST /admin/index-local` - Index local file path (disabled by default unless `ALLOW_ADMIN_INGESTION_API=true`).
+- `GET /admin/status/{job_id}` - Ingestion job status (disabled by default unless `ALLOW_ADMIN_INGESTION_API=true`).
 - `POST /chat` - Ask question.
 - `GET /health` - Health check and index readiness.
 

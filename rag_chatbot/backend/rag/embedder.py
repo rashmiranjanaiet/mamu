@@ -5,8 +5,14 @@ from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 class OpenAIEmbedder:
-    def __init__(self, api_key: str, model: str, batch_size: int = 128):
-        self.client = OpenAI(api_key=api_key)
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        batch_size: int = 128,
+        base_url: str | None = None,
+    ):
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
         self.batch_size = batch_size
 
@@ -24,4 +30,3 @@ class OpenAIEmbedder:
 
     def embed_query(self, text: str) -> List[float]:
         return self._embed_batch([text])[0]
-

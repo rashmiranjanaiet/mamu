@@ -17,6 +17,7 @@ def main() -> None:
         api_key=settings.openai_api_key,
         model=settings.embedding_model,
         batch_size=settings.embedding_batch_size,
+        base_url=settings.openai_base_url,
     )
     ingestion = IngestionService(
         store=store,
@@ -33,4 +34,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

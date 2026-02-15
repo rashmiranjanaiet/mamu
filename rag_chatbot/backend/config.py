@@ -8,6 +8,7 @@ ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 
 class Settings(BaseSettings):
     openai_api_key: str
+    openai_base_url: str = "https://api.openai.com/v1"
     chat_model: str = "gpt-4o-mini"
     embedding_model: str = "text-embedding-3-small"
     chunk_size_words: int = 500
@@ -16,6 +17,7 @@ class Settings(BaseSettings):
     min_confidence: float = 0.35
     app_data_dir: Path = Path("rag_chatbot/data")
     default_book_pdf_path: Optional[Path] = None
+    allow_admin_ingestion_api: bool = False
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH),
